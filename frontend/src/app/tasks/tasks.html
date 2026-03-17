@@ -1,0 +1,128 @@
+<div class="container ">
+  <!-- earlier there was weard jitter issue as the navbar margin bottom 3 wich added white space not belonging to any component and that was causing the scroll jitter  -->
+  <div class="bg-white pt-4 toMakeSticky">
+    <div class="card-header border-bottom mb-3">
+      <div class="row align-items-center">
+        <p class="col fw-bold fs-2 ">My Tasks</p>
+        <div class="col d-flex justify-content-end">
+          <button class="btn btn-outline-primary border-3" (click)="showAdd = !showAdd">
+            New Task
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="d-flex gap-3 mt-2">
+        <a
+          class="text-decoration-none border-bottom border-3 pb-2"
+          [ngClass]="
+            selectedTab === 'all' ? 'border-primary text-primary fw-semibold' : 'text-black'
+          "
+          (click)="setTab('all')"
+        >
+          All <span class="badge bg-primary ms-2">{{ tasks.length }}</span>
+        </a>
+
+        <a
+          class="text-decoration-none border-bottom border-3 pb-2"
+          [ngClass]="
+            selectedTab === 'pending' ? 'border-primary text-primary fw-semibold' : 'text-black'
+          "
+          (click)="setTab('pending')"
+        >
+          Pending <span class="badge bg-primary ms-2">{{ pendingTasks.length }}</span>
+        </a>
+
+        <a
+          class="text-decoration-none border-bottom border-3 pb-2"
+          [ngClass]="
+            selectedTab === 'completed' ? 'border-primary text-primary fw-semibold' : 'text-black'
+          "
+          (click)="setTab('completed')"
+        >
+          Completed <span class="badge bg-primary ms-2">{{ completedTasks.length }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Add Task -->
+    <div *ngIf="showAdd" class="my-3 d-flex gap-2">
+      <label for="newTask" class="form-label visually-hidden">New Task</label>
+      <input
+        id="newTask"
+        type="text"
+        class="form-control"
+        placeholder="Enter task..."
+        [(ngModel)]="newTaskTitle"
+      />
+      <button class="btn btn-success" (click)="createTask()">Add</button>
+    </div>
+
+    <!-- Search -->
+    <input
+      type="search"
+      placeholder="🔍 Search..."
+      class="form-control my-3"
+      [(ngModel)]="searchText"
+    />
+  </div>
+
+  <!-- Task List -->
+  <ul class="list-group">
+    <li
+      *ngFor="let task of filteredTasks()"
+      class="list-group-item d-flex justify-content-between align-items-center border-0 mb-2"
+    >
+      <div class="d-flex align-items-center gap-2 w-100">
+        <!-- Checkbox -->
+        <label for="taskCheckBox" class="visually-hidden">Checkbox</label>
+        <input
+          id="taskCheckBox"
+          type="checkbox"
+          [(ngModel)]="task.completed"
+          (change)="toggleTask(task)"
+          class="form-check-input shadow-none"
+        />
+
+        <!-- NORMAL VIEW -->
+        <div *ngIf="editingTaskId !== task._id; else editMode" class="flex-grow-1">
+          <span [class.text-decoration-line-through]="task.completed">
+            {{ task.title }}
+          </span>
+          <br />
+          <small class="text-muted">
+            {{ task.createdAt | date: 'short' }}
+          </small>
+        </div>
+
+        <!-- EDIT MODE -->
+        <ng-template #editMode>
+          <div class="d-flex gap-2 w-100">
+            <label for="editMode" class="visually-hidden">Edit Task</label>
+            <input id="editMode" type="text" class="form-control" [(ngModel)]="editText" />
+            <button class="btn btn-outline-success btn-sm border-2" (click)="saveEdit(task)">
+              Save
+            </button>
+            <button class="btn btn-outline-secondary btn-sm me-2 border-2" (click)="cancelEdit()">
+              Cancel
+            </button>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary border-2" (click)="startEdit(task)">
+          Edit
+        </button>
+
+        <button class="btn btn-sm btn-outline-danger border-2" (click)="deleteTask(task)">
+          Remove
+        </button>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Empty -->
+  <p *ngIf="filteredTasks().length === 0" class="text-center text-muted mt-3">No tasks found!</p>
+</div>

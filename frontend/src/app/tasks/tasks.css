@@ -1,0 +1,5 @@
+.toMakeSticky{
+  position: sticky;
+  /* top: var(--navbar-height, 56px); */
+  /* z-index: 2; */
+}

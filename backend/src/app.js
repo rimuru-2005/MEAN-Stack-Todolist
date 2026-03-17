@@ -32,9 +32,9 @@ app.use(
 
 app.use(express.json());
 
-app.use("/tasks", taskRoutes);
-app.use("/user", userRoutes);
-app.use("/auth", authRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/auth", authRoutes);
 
 // test server
 app.get("/health", (req, res) => {
