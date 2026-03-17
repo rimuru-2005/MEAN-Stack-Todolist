@@ -2,8 +2,7 @@ const service = require("./auth.service");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { exists, validate } = require("../../models/task.model");
-const { response } = require("../../app");
-const { send } = require("vite");
+
 
 // to create a guest user
 const createGuest = async (req, res) => {
