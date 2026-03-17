@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 // to set production cookie configuration when deploying
-const isProduction = process.env.NODE_ENVIRONMENT === "production";
+const isProduction = process.env.NODE_ENV === "production";
 // to create a guest user
 const createGuest = async (req, res) => {
   try {

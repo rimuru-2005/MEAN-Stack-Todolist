@@ -2,7 +2,6 @@ const router = require('express').Router();
 const controller = require('./auth.controller')
 const adminOnly = require('../../middleware/adminOnly')
 const authMiddleware = require('../../middleware/authMiddleware');
-const { Router } = require('express');
 
 // to create a guest user 
 router.post('/guest', controller.createGuest);
