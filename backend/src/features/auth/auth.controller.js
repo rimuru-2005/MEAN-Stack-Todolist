@@ -1,9 +1,9 @@
 const service = require("./auth.service");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { exists, validate } = require("../../models/task.model");
 
-
+// to set production cookie configuration when deploying
+const isProduction = process.env.NODE_ENVIRONMENT === "production";
 // to create a guest user
 const createGuest = async (req, res) => {
   try {
@@ -13,9 +13,16 @@ const createGuest = async (req, res) => {
       expiresIn: "365d",
     });
 
+    // to set cookie in browser bearing the generated jwt token
+    res.cookie("token", guestJWT, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+    });
+
     res.status(201).json({
       success: true,
-      token: guestJWT,
       message: "Guest User Created Successfully",
     });
   } catch (e) {
@@ -58,9 +65,17 @@ const createUserEmail = async (req, res) => {
       { expiresIn: "7d" },
     );
 
+    // to set cookie in browser bearing the generated jwt token
+    res.cookie("token", emailJWT, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
+
     res.status(201).json({
       success: true,
-      token: emailJWT,
       message: "User Account Created",
     });
   } catch (e) {
@@ -102,15 +117,23 @@ const createUserEmailAdmin = async (req, res) => {
       hashedPass,
     );
 
-    const emailJWT = jwt.sign(
+    const emailJWTAdmin = jwt.sign(
       { sub: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: "7d" },
     );
+
+    // to set cookie in browser bearing the generated jwt token
+    res.cookie("token", emailJWTAdmin, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
 
     res.status(201).json({
       success: true,
-      token: emailJWT,
       message: "Admin Account Created",
     });
   } catch (e) {
@@ -121,7 +144,7 @@ const createUserEmailAdmin = async (req, res) => {
   }
 };
 
-// to login a user 
+// to login a user
 const login = async (req, res) => {
   try {
     // get user input
@@ -139,7 +162,7 @@ const login = async (req, res) => {
 
     if (!loginData) {
       return res.status(404).json({
-        error: "User Deosnot exist",
+        error: "User Does not exist",
       });
     }
 
@@ -152,17 +175,24 @@ const login = async (req, res) => {
       });
     }
 
-    // login jwt creation 
+    // login jwt creation
     const loginJWT = jwt.sign(
       { sub: loginData._id, email: loginData.email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
 
+    // to set cookie in browser bearing the generated jwt token
+    res.cookie("token", loginJWT, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
     // response sending
     res.status(200).json({
       success: true,
-      token: loginJWT,
       message: "User Login JWT Created Successfully",
     });
   } catch (e) {
@@ -173,9 +203,25 @@ const login = async (req, res) => {
   }
 };
 
+// to logut user and delete cookie
+const logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};
+
 module.exports = {
   createUserEmail,
   createGuest,
   createUserEmailAdmin,
   login,
+  logout,
 };
