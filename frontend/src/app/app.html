@@ -1,10 +1,120 @@
-<div class="vh-100 vw-100 ">
-  <app-navbar></app-navbar>
-  <div class="d-flex ">
-    <app-sidebar class="h-100"></app-sidebar>
-    <app-tasks *ngIf="authReady()" class="w-100 h-100"></app-tasks>
-    <div *ngIf="authError()" class="w-100 d-flex align-items-center justify-content-center p-4">
-      <p class="text-danger mb-0">{{ authError() }}</p>
-    </div>
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="brand-mark"></span>
+    <strong>TaskMaster</strong>
   </div>
+
+  <div class="topbar-actions">
+    <button class="icon-button" [disabled]="busy" (click)="currentUser ? refreshCurrentUser() : continueAsGuest()">
+      +
+    </button>
+    <div class="avatar-badge">{{ userInitials }}</div>
+  </div>
+</header>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <p class="sidebar-title">TaskMaster</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item">
+        <span class="nav-dot"></span>
+        Dashboard
+      </button>
+      <button class="nav-item active">
+        <span class="nav-dot"></span>
+        Tasks
+      </button>
+      <button class="nav-item">
+        <span class="nav-dot"></span>
+        Settings
+      </button>
+    </nav>
+
+    <section class="sidebar-card">
+      <p class="card-label">Session</p>
+      <p *ngIf="sessionLoading" class="soft-text">Checking session...</p>
+      <div *ngIf="!sessionLoading && currentUser" class="profile-copy">
+        <strong>{{ currentUser.username }}</strong>
+        <span>{{ currentUser.email || 'Guest session' }}</span>
+        <span>Role: {{ currentUser.role }}</span>
+      </div>
+      <p *ngIf="!sessionLoading && !currentUser" class="soft-text">No active session.</p>
+      <p *ngIf="feedback" class="inline-feedback success">{{ feedback }}</p>
+      <p *ngIf="sessionError" class="inline-feedback error">{{ sessionError }}</p>
+    </section>
+
+    <section class="sidebar-card" *ngIf="!currentUser">
+      <p class="card-label">Access</p>
+      <div class="stack-form">
+        <button class="soft-button" [disabled]="busy" (click)="continueAsGuest()">
+          Continue as Guest
+        </button>
+        <input [(ngModel)]="loginForm.email" type="email" placeholder="Email" />
+        <input [(ngModel)]="loginForm.password" type="password" placeholder="Password" />
+        <button class="dark-button" [disabled]="busy" (click)="login()">Login</button>
+        <input [(ngModel)]="signupForm.username" type="text" placeholder="Username" />
+        <input [(ngModel)]="signupForm.email" type="email" placeholder="Email" />
+        <input [(ngModel)]="signupForm.password" type="password" placeholder="Password" />
+        <button class="soft-button" [disabled]="busy" (click)="signup()">Create Account</button>
+      </div>
+    </section>
+
+    <section class="sidebar-card" *ngIf="currentUser">
+      <p class="card-label">Account</p>
+      <div class="meta-grid">
+        <div>
+          <span>Name</span>
+          <strong>{{ currentUser.username }}</strong>
+        </div>
+        <div>
+          <span>Email</span>
+          <strong>{{ currentUser.email || 'Not set' }}</strong>
+        </div>
+      </div>
+
+      <div class="stack-form" *ngIf="isGuest">
+        <input [(ngModel)]="upgradeForm.email" type="email" placeholder="Upgrade email" />
+        <input [(ngModel)]="upgradeForm.password" type="password" placeholder="Upgrade password" />
+        <button class="dark-button" [disabled]="busy" (click)="upgradeGuest()">Upgrade Guest</button>
+      </div>
+
+      <div class="button-row">
+        <button class="soft-button" [disabled]="busy" (click)="refreshCurrentUser()">Refresh</button>
+        <button class="soft-button" [disabled]="busy" (click)="logout()">Logout</button>
+      </div>
+      <button class="danger-button full" [disabled]="busy" (click)="deleteAccount()">
+        Delete Account
+      </button>
+    </section>
+
+    <section class="sidebar-card" *ngIf="isAdmin">
+      <p class="card-label">Admin</p>
+      <div class="stack-form">
+        <input [(ngModel)]="adminCreateForm.username" type="text" placeholder="Admin username" />
+        <input [(ngModel)]="adminCreateForm.email" type="email" placeholder="Admin email" />
+        <input [(ngModel)]="adminCreateForm.password" type="password" placeholder="Admin password" />
+        <button class="dark-button" [disabled]="busy" (click)="createAdmin()">Create Admin</button>
+        <input [(ngModel)]="adminActionForm.promoteUserId" type="text" placeholder="Promote user ID" />
+        <button class="soft-button" [disabled]="busy" (click)="promoteUser()">Promote User</button>
+        <input [(ngModel)]="adminActionForm.demoteUserId" type="text" placeholder="Demote user ID" />
+        <input [(ngModel)]="adminActionForm.demoteKey" type="password" placeholder="Demote key" />
+        <button class="danger-button full" [disabled]="busy" (click)="demoteUser()">Demote User</button>
+      </div>
+    </section>
+  </aside>
+
+  <main class="workspace">
+    <app-tasks *ngIf="currentUser && !sessionLoading"></app-tasks>
+
+    <section *ngIf="!currentUser && !sessionLoading" class="empty-state">
+      <h3>No active session</h3>
+      <p>Use the left panel to continue as guest or sign in.</p>
+      <button class="dark-button" [disabled]="busy" (click)="continueAsGuest()">
+        Continue as Guest
+      </button>
+    </section>
+  </main>
 </div>

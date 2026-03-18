@@ -1,5 +1,180 @@
-.toMakeSticky{
-  position: sticky;
-  /* top: var(--navbar-height, 56px); */
-  /* z-index: 2; */
+.tasks-shell {
+  display: grid;
+  gap: 22px;
+}
+
+.tasks-header,
+.composer-row,
+.task-tabs,
+.search-shell,
+.task-row,
+.task-side,
+.edit-actions {
+  display: flex;
+  align-items: center;
+}
+
+.tasks-header {
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tasks-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3.1rem);
+  font-weight: 700;
+}
+
+.tasks-subtitle {
+  margin: 6px 0 0;
+  color: #777a96;
+}
+
+.new-task-button,
+.refresh-link,
+.inline-action {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.new-task-button {
+  border-radius: 16px;
+  padding: 12px 20px;
+  background: #f1f1f7;
+  color: #232434;
+}
+
+.new-task-button.submit {
+  background: #202131;
+  color: #fff;
+}
+
+.task-tabs {
+  gap: 28px;
+  border-bottom: 1px solid #ececf4;
+}
+
+.tab-link {
+  border: 0;
+  background: transparent;
+  padding: 0 0 16px;
+  color: #7b7fa0;
+  font: inherit;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+
+.tab-link.active {
+  color: #1f2030;
+  border-bottom-color: #cfd2e6;
+}
+
+.composer-row {
+  gap: 12px;
+}
+
+.search-shell {
+  gap: 12px;
+  padding: 0 18px;
+  min-height: 58px;
+  border-radius: 18px;
+  background: #f3f3f9;
+}
+
+.search-icon {
+  font-size: 1.35rem;
+  color: #8184a1;
+}
+
+.task-search,
+.task-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #232335;
+  padding: 14px 0;
+}
+
+.refresh-link,
+.inline-action {
+  background: transparent;
+  color: #7a7ea0;
+}
+
+.inline-action.danger {
+  color: #b05757;
+}
+
+.task-list {
+  display: grid;
+}
+
+.task-row {
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 0;
+  border-bottom: 1px solid #f0f0f6;
+}
+
+.task-text {
+  flex: 1;
+}
+
+.task-copy p {
+  margin: 0 0 6px;
+  font-size: 1.04rem;
+  color: #1f2030;
+}
+
+.task-copy small {
+  color: #8588a6;
+}
+
+.task-side {
+  gap: 12px;
+}
+
+.task-checkbox {
+  width: 22px;
+  height: 22px;
+  accent-color: #1f2030;
+}
+
+.task-edit {
+  display: grid;
+  gap: 10px;
+}
+
+.done {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.task-error {
+  margin: 0;
+  color: #a33f3f;
+}
+
+.task-empty {
+  margin: 0;
+  padding: 30px 0;
+  color: #7a7e98;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .tasks-header,
+  .composer-row,
+  .task-row,
+  .task-side {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .task-tabs {
+    gap: 18px;
+    overflow-x: auto;
+  }
 }

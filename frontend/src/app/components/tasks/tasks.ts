@@ -13,19 +13,19 @@ import { TaskService } from '../../service/tasks/tasks.service';
   styleUrl: './tasks.css',
 })
 export class TasksComponent implements OnInit {
-  // 🔹 MAIN DATA
   tasks: Tasks[] = [];
 
-  // 🔹 UI STATE
   selectedTab: 'all' | 'pending' | 'completed' = 'all';
-  searchText: string = '';
+  searchText = '';
 
   showAdd = false;
   newTaskTitle = '';
   isCreating = false;
+  isLoading = true;
+  taskError: string | null = null;
 
   editingTaskId: string | null = null;
-  editText: string = '';
+  editText = '';
 
   constructor(private taskService: TaskService) {}
 
@@ -33,25 +33,35 @@ export class TasksComponent implements OnInit {
     this.fetchTasks();
   }
 
-  // =====================================================
-  // 🔹 GET TASKS (API)
-  // =====================================================
   fetchTasks() {
-    this.taskService.getTasks().subscribe({
-      next: (data) => (this.tasks = data),
-      error: (err) => console.error('Error fetching tasks:', err),
-    });
+    this.isLoading = true;
+    this.taskError = null;
+
+    this.taskService
+      .getTasks()
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        }),
+      )
+      .subscribe({
+        next: (data) => {
+          this.tasks = data;
+        },
+        error: (err) => {
+          console.error('Error fetching tasks:', err);
+          this.taskError = 'Unable to load tasks.';
+        },
+      });
   }
 
-  // =====================================================
-  // 🔹 CREATE TASK
-  // =====================================================
   createTask() {
     const title = this.newTaskTitle.trim();
 
     if (!title || this.isCreating) return;
 
     this.isCreating = true;
+    this.taskError = null;
 
     this.taskService
       .createTask({ title })
@@ -68,64 +78,65 @@ export class TasksComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error creating task:', err);
+          this.taskError = 'Unable to create task.';
         },
       });
   }
 
-  // =====================================================
-  // 🔹 TOGGLE TASK
-  // =====================================================
   toggleTask(task: Tasks) {
-    // Optimistic UI update
     const updatedStatus = task.completed;
+    this.taskError = null;
 
     this.taskService.toggleTask(task._id!, updatedStatus).subscribe({
+      next: (updatedTask) => {
+        task.completed = updatedTask.completed;
+      },
       error: (err) => {
         console.error('Error updating task:', err);
-        // revert if failed
         task.completed = !updatedStatus;
+        this.taskError = 'Unable to update task.';
       },
     });
   }
 
-  // =====================================================
-  // 🔹 DELETE TASK
-  // =====================================================
   deleteTask(task: Tasks) {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
-    // Optimistic remove
     const backup = this.tasks;
     this.tasks = this.tasks.filter((t) => t._id !== task._id);
+    this.taskError = null;
 
     this.taskService.deleteTask(task._id!).subscribe({
       error: (err) => {
         console.error('Error deleting task:', err);
-        this.tasks = backup; // revert
+        this.tasks = backup;
+        this.taskError = 'Unable to delete task.';
       },
     });
   }
 
-  // =====================================================
-  // 🔹 EDIT TASK
-  // =====================================================
   startEdit(task: Tasks) {
     this.editingTaskId = task._id!;
     this.editText = task.title;
   }
 
   saveEdit(task: Tasks) {
-    if (!this.editText.trim()) return;
+    const newTitle = this.editText.trim();
 
-    const newTitle = this.editText;
+    if (!newTitle) return;
+
+    this.taskError = null;
 
     this.taskService.updateTask(task._id!, { title: newTitle }).subscribe({
-      next: () => {
-        task.title = newTitle;
+      next: (updatedTask) => {
+        task.title = updatedTask.title;
         this.editingTaskId = null;
         this.editText = '';
       },
-      error: (err) => console.error('Error updating task:', err),
+      error: (err) => {
+        console.error('Error updating task:', err);
+        this.taskError = 'Unable to edit task.';
+      },
     });
   }
 
@@ -134,16 +145,10 @@ export class TasksComponent implements OnInit {
     this.editText = '';
   }
 
-  // =====================================================
-  // 🔹 TAB SWITCHING
-  // =====================================================
   setTab(tab: 'all' | 'pending' | 'completed') {
     this.selectedTab = tab;
   }
 
-  // =====================================================
-  // 🔹 GETTERS
-  // =====================================================
   get pendingTasks() {
     return this.tasks.filter((t) => !t.completed);
   }
@@ -152,9 +157,6 @@ export class TasksComponent implements OnInit {
     return this.tasks.filter((t) => t.completed);
   }
 
-  // =====================================================
-  // 🔹 FILTER LOGIC
-  // =====================================================
   filteredTasks(): Tasks[] {
     let filtered = this.tasks;
 

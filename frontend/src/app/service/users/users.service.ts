@@ -1,7 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+
+export interface CurrentUser {
+  _id: string;
+  username: string;
+  email?: string;
+  role: 'user' | 'admin';
+}
+
+interface CurrentUserResponse {
+  success: boolean;
+  data: CurrentUser;
+}
 
 interface UpgradePayload {
   email: string;
@@ -22,8 +34,16 @@ export class UsersService {
     });
   }
 
-  getCurrentUser(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/me`, {
+  getCurrentUser(): Observable<CurrentUser> {
+    return this.http
+      .get<CurrentUserResponse>(`${this.apiUrl}/me`, {
+        withCredentials: true,
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  deleteCurrentUser(): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/delete`, {}, {
       withCredentials: true,
     });
   }
