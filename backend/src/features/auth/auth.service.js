@@ -25,9 +25,15 @@ async function validateUser(email) {
   return await User.findOne({ email }).select("+password");
 }
 
+// to get a specific user
+async function getUserById(id) {
+  return await User.findById(id);
+}
+
 module.exports = {
   createUserEmail,
   createGuest,
   createUserEmailAdmin,
-  validateUser
+  validateUser,
+  getUserById,
 };

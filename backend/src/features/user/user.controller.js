@@ -1,6 +1,14 @@
 const service = require("./user.service");
 const bcrypt = require("bcrypt");
 
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
+};
+
 // to create the account for a gurst user
 async function addEmail(req, res) {
   try {
@@ -142,9 +150,38 @@ async function demote(req, res) {
     });
   }
 }
+
+// to delete a user using user if alog with all tasks 
+async function deleteUser(req, res) {
+  try {
+    const id = req.userId;
+    const deletedUser = await service.deleteUser(id);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.clearCookie("token", cookieOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: "User and associated tasks deleted successfully",
+    });
+  } catch (e) {
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+}
+
 module.exports = {
   getCurrentUser,
   addEmail,
   promote,
   demote,
+  deleteUser,
 };

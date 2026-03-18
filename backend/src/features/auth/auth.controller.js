@@ -2,24 +2,62 @@ const service = require("./auth.service");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-// to set production cookie configuration when deploying
 const isProduction = process.env.NODE_ENV === "production";
-console.log(isProduction);
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
+};
+
+const getExistingSessionUser = async (req, res) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const existingUser = await service.getUserById(decoded.sub);
+
+    if (!existingUser) {
+      res.clearCookie("token", {
+        ...cookieOptions,
+      });
+      return null;
+    }
+
+    return existingUser;
+  } catch (e) {
+    res.clearCookie("token", {
+      ...cookieOptions,
+    });
+    return null;
+  }
+};
+
 // to create a guest user
 const createGuest = async (req, res) => {
   try {
+    const existingUser = await getExistingSessionUser(req, res);
+
+    if (existingUser) {
+      return res.status(200).json({
+        success: true,
+        message: "Existing session is still valid",
+      });
+    }
+
     const user = await service.createGuest();
 
     const guestJWT = jwt.sign({ sub: user._id }, process.env.JWT_SECRET, {
       expiresIn: "365d",
     });
 
-    // to set cookie in browser bearing the generated jwt token
     res.cookie("token", guestJWT, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
       maxAge: 365 * 24 * 60 * 60 * 1000,
+      ...cookieOptions,
     });
 
     res.status(201).json({
@@ -37,8 +75,17 @@ const createGuest = async (req, res) => {
 // to create a user account with email
 const createUserEmail = async (req, res) => {
   try {
+    const existingSessionUser = await getExistingSessionUser(req, res);
+
+    if (existingSessionUser) {
+      return res.status(409).json({
+        success: false,
+        message: "User is already authenticated",
+      });
+    }
+
     const { username, email, password } = req.body;
-    // validating input
+
     if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -46,7 +93,6 @@ const createUserEmail = async (req, res) => {
       });
     }
 
-    // check if the user already exists
     const existingUser = await service.validateUser(email);
 
     if (existingUser) {
@@ -55,9 +101,7 @@ const createUserEmail = async (req, res) => {
       });
     }
 
-    // the 10 here denotes the number of hasing rounds 10 means 2^10 rounds of hasing
     const hashedPass = await bcrypt.hash(password, 10);
-
     const user = await service.createUserEmail(username, email, hashedPass);
 
     const emailJWT = jwt.sign(
@@ -66,13 +110,9 @@ const createUserEmail = async (req, res) => {
       { expiresIn: "7d" },
     );
 
-    // to set cookie in browser bearing the generated jwt token
     res.cookie("token", emailJWT, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
+      ...cookieOptions,
     });
 
     res.status(201).json({
@@ -92,7 +132,6 @@ const createUserEmailAdmin = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // validating input
     if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -100,7 +139,6 @@ const createUserEmailAdmin = async (req, res) => {
       });
     }
 
-    // check if the user already exists
     const existingUser = await service.validateUser(email);
 
     if (existingUser) {
@@ -109,9 +147,7 @@ const createUserEmailAdmin = async (req, res) => {
       });
     }
 
-    // the 10 here denotes the number of hasing rounds 10 means 2^10 rounds of hasing
     const hashedPass = await bcrypt.hash(password, 10);
-
     const user = await service.createUserEmailAdmin(
       username,
       email,
@@ -124,13 +160,9 @@ const createUserEmailAdmin = async (req, res) => {
       { expiresIn: "7d" },
     );
 
-    // to set cookie in browser bearing the generated jwt token
     res.cookie("token", emailJWTAdmin, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
+      ...cookieOptions,
     });
 
     res.status(201).json({
@@ -148,17 +180,23 @@ const createUserEmailAdmin = async (req, res) => {
 // to login a user
 const login = async (req, res) => {
   try {
-    // get user input
+    const existingSessionUser = await getExistingSessionUser(req, res);
+
+    if (existingSessionUser) {
+      return res.status(200).json({
+        success: true,
+        message: "Existing session is still valid",
+      });
+    }
+
     const { email, password } = req.body;
 
-    // input vaildation
     if (!email || !password) {
       return res.status(400).json({
         error: "Email And Password are required",
       });
     }
 
-    // user existance validation
     const loginData = await service.validateUser(email);
 
     if (!loginData) {
@@ -167,7 +205,6 @@ const login = async (req, res) => {
       });
     }
 
-    // password vaildation
     const verifyPass = await bcrypt.compare(password, loginData.password);
 
     if (!verifyPass) {
@@ -176,22 +213,17 @@ const login = async (req, res) => {
       });
     }
 
-    // login jwt creation
     const loginJWT = jwt.sign(
       { sub: loginData._id, email: loginData.email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
 
-    // to set cookie in browser bearing the generated jwt token
     res.cookie("token", loginJWT, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
+      ...cookieOptions,
     });
-    // response sending
+
     res.status(200).json({
       success: true,
       message: "User Login JWT Created Successfully",
@@ -204,13 +236,10 @@ const login = async (req, res) => {
   }
 };
 
-// to logut user and delete cookie
+// to logout user and delete cookie
 const logout = (req, res) => {
   res.clearCookie("token", {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-    path: "/",
+    ...cookieOptions,
   });
 
   res.status(200).json({

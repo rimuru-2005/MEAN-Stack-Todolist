@@ -89,7 +89,6 @@ const markTask = async (req, res) => {
     const id = req.params.id;
     const { completed } = req.body;
 
-    // console.log(completed);
     const updatedTask = await service.markTask(userId, id, completed);
 
     if (!updatedTask) {

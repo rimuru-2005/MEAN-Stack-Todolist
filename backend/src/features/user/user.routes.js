@@ -9,6 +9,9 @@ router.patch('/upgrade',authMiddleware, controller.addEmail);
 // to get the data of the current user 
 router.get('/me', authMiddleware, controller.getCurrentUser);
 
+// to delete a user using user id 
+router.patch('/delete',authMiddleware, controller.deleteUser)
+
 // to promote a user
 router.patch('/promote/:id', authMiddleware, adminOnly, controller.promote);
 

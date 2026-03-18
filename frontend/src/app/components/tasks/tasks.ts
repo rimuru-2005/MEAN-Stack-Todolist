@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Tasks } from '../models/tasks.model';
+import { finalize } from 'rxjs';
+import { Tasks } from '../../models/tasks.model';
+import { TaskService } from '../../service/tasks/tasks.service';
 
 @Component({
   selector: 'app-tasks',
@@ -20,112 +22,70 @@ export class TasksComponent implements OnInit {
 
   showAdd = false;
   newTaskTitle = '';
+  isCreating = false;
 
   editingTaskId: string | null = null;
   editText: string = '';
 
+  constructor(private taskService: TaskService) {}
+
   ngOnInit(): void {
-    this.loadLocalTasks();
+    this.fetchTasks();
   }
 
   // =====================================================
-  // 🔹 TEMP LOCAL DATA (REPLACE WITH SERVICE LATER)
+  // 🔹 GET TASKS (API)
   // =====================================================
-  loadLocalTasks() {
-    this.tasks = [
-      {
-        _id: '1',
-        title: 'Learn Angular',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '2',
-        title: 'Build Todo App',
-        completed: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '3',
-        title: 'Workout',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '3',
-        title: 'Workout',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '3',
-        title: 'Workout',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '3',
-        title: 'Workout',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '3',
-        title: 'Workout',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '3',
-        title: 'Workout',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    /*
-    🔥 FUTURE (Service Call):
-    this.taskService.getTasks().subscribe(data => {
-      this.tasks = data;
+  fetchTasks() {
+    this.taskService.getTasks().subscribe({
+      next: (data) => (this.tasks = data),
+      error: (err) => console.error('Error fetching tasks:', err),
     });
-    */
   }
 
   // =====================================================
   // 🔹 CREATE TASK
   // =====================================================
   createTask() {
-    if (!this.newTaskTitle.trim()) return;
+    const title = this.newTaskTitle.trim();
 
-    const newTask: Tasks = {
-      _id: Date.now().toString(), // temp ID
-      title: this.newTaskTitle,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    };
+    if (!title || this.isCreating) return;
 
-    this.tasks.unshift(newTask);
-    this.newTaskTitle = '';
-    this.showAdd = false;
+    this.isCreating = true;
 
-    /*
-    🔥 FUTURE:
-    this.taskService.createTask({ title: this.newTaskTitle })
-      .subscribe(task => this.tasks.unshift(task));
-    */
+    this.taskService
+      .createTask({ title })
+      .pipe(
+        finalize(() => {
+          this.isCreating = false;
+        }),
+      )
+      .subscribe({
+        next: (task) => {
+          this.tasks = [task, ...this.tasks];
+          this.newTaskTitle = '';
+          this.showAdd = false;
+        },
+        error: (err) => {
+          console.error('Error creating task:', err);
+        },
+      });
   }
 
   // =====================================================
   // 🔹 TOGGLE TASK
   // =====================================================
   toggleTask(task: Tasks) {
-    /*
-  value already updated by ngModel
-  */
-    /*
-  🔥 FUTURE API:
-  this.taskService.updateTask(task._id, { completed: task.completed }).subscribe();
-  */
+    // Optimistic UI update
+    const updatedStatus = task.completed;
+
+    this.taskService.toggleTask(task._id!, updatedStatus).subscribe({
+      error: (err) => {
+        console.error('Error updating task:', err);
+        // revert if failed
+        task.completed = !updatedStatus;
+      },
+    });
   }
 
   // =====================================================
@@ -134,13 +94,16 @@ export class TasksComponent implements OnInit {
   deleteTask(task: Tasks) {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
+    // Optimistic remove
+    const backup = this.tasks;
     this.tasks = this.tasks.filter((t) => t._id !== task._id);
 
-    /*
-    🔥 FUTURE:
-    this.taskService.deleteTask(task._id)
-      .subscribe();
-    */
+    this.taskService.deleteTask(task._id!).subscribe({
+      error: (err) => {
+        console.error('Error deleting task:', err);
+        this.tasks = backup; // revert
+      },
+    });
   }
 
   // =====================================================
@@ -154,14 +117,16 @@ export class TasksComponent implements OnInit {
   saveEdit(task: Tasks) {
     if (!this.editText.trim()) return;
 
-    task.title = this.editText;
-    this.editingTaskId = null;
-    this.editText = '';
+    const newTitle = this.editText;
 
-    /*
-  🔥 FUTURE:
-  this.taskService.updateTask(task._id, { title: this.editText }).subscribe();
-  */
+    this.taskService.updateTask(task._id!, { title: newTitle }).subscribe({
+      next: () => {
+        task.title = newTitle;
+        this.editingTaskId = null;
+        this.editText = '';
+      },
+      error: (err) => console.error('Error updating task:', err),
+    });
   }
 
   cancelEdit() {
@@ -177,7 +142,7 @@ export class TasksComponent implements OnInit {
   }
 
   // =====================================================
-  // 🔹 GETTERS (for counts)
+  // 🔹 GETTERS
   // =====================================================
   get pendingTasks() {
     return this.tasks.filter((t) => !t.completed);
@@ -188,19 +153,17 @@ export class TasksComponent implements OnInit {
   }
 
   // =====================================================
-  // 🔹 FILTER LOGIC (TAB + SEARCH)
+  // 🔹 FILTER LOGIC
   // =====================================================
   filteredTasks(): Tasks[] {
     let filtered = this.tasks;
 
-    // 🔹 Tab filtering
     if (this.selectedTab === 'pending') {
       filtered = filtered.filter((t) => !t.completed);
     } else if (this.selectedTab === 'completed') {
       filtered = filtered.filter((t) => t.completed);
     }
 
-    // 🔹 Search filtering
     if (this.searchText.trim()) {
       const search = this.searchText.toLowerCase();
       filtered = filtered.filter((t) => t.title.toLowerCase().includes(search));

@@ -54,8 +54,11 @@
         class="form-control"
         placeholder="Enter task..."
         [(ngModel)]="newTaskTitle"
+        (keyup.enter)="createTask()"
       />
-      <button class="btn btn-success" (click)="createTask()">Add</button>
+      <button class="btn btn-success" [disabled]="isCreating" (click)="createTask()">
+        {{ isCreating ? 'Adding...' : 'Add' }}
+      </button>
     </div>
 
     <!-- Search -->
