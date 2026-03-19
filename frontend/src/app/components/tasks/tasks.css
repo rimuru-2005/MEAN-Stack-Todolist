@@ -177,4 +177,84 @@
     gap: 18px;
     overflow-x: auto;
   }
+
+  .task-row {
+    padding: 18px 0;
+  }
+
+  .task-side {
+    width: 100%;
+  }
+
+  .inline-action,
+  .task-checkbox {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .tasks-shell {
+    gap: 18px;
+  }
+
+  .tasks-header h1 {
+    font-size: 2rem;
+  }
+
+  .tasks-subtitle {
+    font-size: 0.94rem;
+  }
+
+  .new-task-button,
+  .new-task-button.submit {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-shell {
+    padding: 0 14px;
+    min-height: 52px;
+    border-radius: 16px;
+  }
+
+  .task-tabs {
+    gap: 14px;
+  }
+
+  .tab-link {
+    padding-bottom: 12px;
+    font-size: 0.95rem;
+  }
+
+  .task-copy p {
+    font-size: 0.98rem;
+  }
+
+  .task-copy small {
+    font-size: 0.88rem;
+  }
+
+  .task-edit {
+    width: 100%;
+  }
+
+  .edit-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 420px) {
+  .tasks-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .search-shell {
+    gap: 8px;
+  }
+
+  .refresh-link,
+  .inline-action {
+    font-size: 0.9rem;
+  }
 }

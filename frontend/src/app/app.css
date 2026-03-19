@@ -229,6 +229,19 @@ button:disabled {
   .sidebar {
     border-right: 0;
     border-bottom: 1px solid #ececf4;
+    padding-bottom: 18px;
+  }
+
+  .sidebar-nav {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(120px, 1fr);
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    justify-content: center;
   }
 }
 
@@ -241,6 +254,7 @@ button:disabled {
 
   .sidebar {
     padding: 20px 18px;
+    gap: 16px;
   }
 
   .meta-grid,
@@ -248,5 +262,66 @@ button:disabled {
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .topbar {
+    height: auto;
+    min-height: 68px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .topbar-brand strong {
+    font-size: 1rem;
+  }
+
+  .icon-button,
+  .avatar-badge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sidebar-card,
+  .empty-state {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .stack-form {
+    gap: 8px;
+  }
+
+  .soft-button,
+  .dark-button,
+  .danger-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar,
+  .workspace,
+  .sidebar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .topbar {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .topbar-brand,
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .sidebar-title {
+    font-size: 1.2rem;
+  }
+
+  input {
+    padding: 11px 12px;
   }
 }

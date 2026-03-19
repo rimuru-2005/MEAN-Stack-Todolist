@@ -33,14 +33,9 @@
       </button>
     </nav>
 
-    <section class="sidebar-card">
+    <section class="sidebar-card" *ngIf="!currentUser">
       <p class="card-label">Session</p>
       <p *ngIf="sessionLoading" class="soft-text">Checking session...</p>
-      <div *ngIf="!sessionLoading && currentUser" class="profile-copy">
-        <strong>{{ currentUser.username }}</strong>
-        <span>{{ currentUser.email || 'Guest session' }}</span>
-        <span>Role: {{ currentUser.role }}</span>
-      </div>
       <p *ngIf="!sessionLoading && !currentUser" class="soft-text">No active session.</p>
       <p *ngIf="feedback" class="inline-feedback success">{{ feedback }}</p>
       <p *ngIf="sessionError" class="inline-feedback error">{{ sessionError }}</p>
